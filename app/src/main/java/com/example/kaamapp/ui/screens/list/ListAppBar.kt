@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,10 +36,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.kaamapp.R
+import com.example.kaamapp.components.DialogAlertBox
 import com.example.kaamapp.components.PriorityItem
 import com.example.kaamapp.models.data.Priority
 import com.example.kaamapp.ui.theme.topAppBarBackgroundColor
 import com.example.kaamapp.ui.theme.topAppBarContentColor
+import com.example.kaamapp.utils.Action
 import com.example.kaamapp.utils.SearchAppBarState
 import com.example.kaamapp.viewmodels.SharedViewModel
 
@@ -55,8 +58,11 @@ fun ListAppBar(
                     sharedViewModel.searchAppBarState.value  =
                         SearchAppBarState.OPENED
             },
-                onDeleteClicked =  {},
-            onSortClicked =     {})
+            onSortClicked =     {
+                                sharedViewModel.persistSortingState(it)
+            },
+                sharedViewModel
+            )
         }
         else->{
         SearchAppBar(
@@ -73,7 +79,9 @@ fun ListAppBar(
                 }
 
             },
-            onSearchClicked = {}
+            onSearchClicked = {
+                sharedViewModel.getSearchedTask(it)
+            }
             )
         }
     }
@@ -85,7 +93,7 @@ fun ListAppBar(
 fun DefaultListAppBar(
     onSearchClicked: ()->Unit,
     onSortClicked: (priority:Priority)->Unit,
-    onDeleteClicked : ()->Unit
+    sharedViewModel: SharedViewModel,
 ){
     TopAppBar(
         title = {
@@ -94,7 +102,7 @@ fun DefaultListAppBar(
                 )
         },
         actions = {
-            ListAppBarActions(onSearchClicked,onSortClicked,onDeleteClicked)
+            ListAppBarActions(onSearchClicked,onSortClicked,sharedViewModel)
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.topAppBarBackgroundColor
@@ -107,11 +115,31 @@ fun DefaultListAppBar(
 fun ListAppBarActions(
     onSearchClicked: ()->Unit,
     onSortClicked: (priority:Priority)->Unit,
-    onDeleteClicked : ()->Unit
+    sharedViewModel: SharedViewModel
 ){
+    var openDialog by remember{
+        mutableStateOf(false)
+    }
+    DialogAlertBox(
+        title = stringResource(
+            id = R.string.delete_all_task
+        ),
+        text = stringResource(
+            id = R.string.delete_all_task_confirmation
+        ),
+        onConfirmation = {
+                         sharedViewModel.action.value = Action.DELETE_ALL
+        },
+        onDismiss = {
+                    openDialog = false
+        },
+        isOpen = openDialog
+    )
     SearchAction(onSearchClicked)
     SortAction(onSortClicked)
-    DeleteAction(onDeleteClicked)
+    DeleteAction{
+        openDialog = true
+    }
 }
 @Composable
 fun SearchAction(
@@ -170,7 +198,7 @@ fun SortAction(
 
 @Composable
 fun DeleteAction(
-    onDeleteClicked : ()->Unit
+    onDeleteAllClicked : ()->Unit
 ){
     var expended by rememberSaveable {
         mutableStateOf(false)
@@ -190,7 +218,7 @@ fun DeleteAction(
             },
                 onClick = {
                     expended = false
-                    onDeleteClicked()
+                    onDeleteAllClicked()
                 })}
 
     }
@@ -279,15 +307,15 @@ fun SearchAppBar(
 }
 
 
-@Composable
-@Preview
-private fun DefaultListAppBarPreview(){
-    DefaultListAppBar(
-        onSearchClicked = {},
-        onSortClicked = {},
-        onDeleteClicked = {}
-    )
-}
+//@Composable
+//@Preview
+//private fun DefaultListAppBarPreview(){
+//    DefaultListAppBar(
+//        onSearchClicked = {},
+//        onSortClicked = {},
+//
+//    )
+//}
 
 @Composable
 @Preview(showBackground = true)

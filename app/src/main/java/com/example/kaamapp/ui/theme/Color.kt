@@ -34,3 +34,15 @@ val ColorScheme.taskItemBackgroundColor : Color
 val ColorScheme.taskTitleColor : Color
     @Composable
     get() = if(isSystemInDarkTheme()) Color.LightGray else Color.DarkGray
+
+val ColorScheme.addTaskButton : Color
+    @Composable
+    get() = if(isSystemInDarkTheme()) Color.LightGray else Purple40
+
+val ColorScheme.addTaskButtonOnClick : Color
+    @Composable
+    get() = if(isSystemInDarkTheme()) MediumGray else PurpleGrey80
+
+val ColorScheme.addTaskButtonContent : Color
+    @Composable
+    get() = if(isSystemInDarkTheme()) Color.Black else Color.White

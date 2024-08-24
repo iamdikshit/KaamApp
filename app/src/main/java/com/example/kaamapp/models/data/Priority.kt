@@ -6,5 +6,5 @@ enum class Priority(val color: Color) {
     High(Color.Red),
     Medium(Color.Yellow),
     Low(Color.Green),
-    None(Color.White)
+    None(Color.White);
 }

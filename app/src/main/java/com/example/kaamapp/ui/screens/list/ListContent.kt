@@ -27,24 +27,66 @@ import com.example.kaamapp.ui.theme.MediumGray
 import com.example.kaamapp.ui.theme.taskItemBackgroundColor
 import com.example.kaamapp.ui.theme.taskTitleColor
 import com.example.kaamapp.utils.RequestState
+import com.example.kaamapp.utils.SearchAppBarState
 
 @Composable
 fun ListContent(
     tasks:RequestState<List<TodoTask>>,
     navigationToTaskScreen:(taskId:Int)->Unit,
+    paddingValues: PaddingValues,
+    searchedTask:RequestState<List<TodoTask>>,
+    searchAppBarState: SearchAppBarState,
+    lowPriorityTasks : List<TodoTask>,
+    highPriorityTasks : List<TodoTask>,
+    sortState:RequestState<Priority>
+){
+    if(sortState is RequestState.Success)
+    {
+        when{
+            searchAppBarState == SearchAppBarState.TRIGGERED -> {
+                if(searchedTask is RequestState.Success)
+                {
+                    HandleTask(tasks = searchedTask.data,
+                        navigationToTaskScreen =navigationToTaskScreen ,
+                        paddingValues =paddingValues )
+                }
+            }
+            sortState.data == Priority.None->{
+                if (tasks is RequestState.Success)
+                {
+                    HandleTask(tasks = tasks.data,
+                        navigationToTaskScreen =navigationToTaskScreen ,
+                        paddingValues =paddingValues )
+                }
+            }
+            sortState.data == Priority.Low ->{
+                HandleTask(tasks = lowPriorityTasks,
+                    navigationToTaskScreen =navigationToTaskScreen ,
+                    paddingValues =paddingValues )
+            }
+            sortState.data == Priority.High->{
+                HandleTask(tasks = highPriorityTasks,
+                    navigationToTaskScreen =navigationToTaskScreen ,
+                    paddingValues =paddingValues )
+            }
+        }
+    }
+
+}
+
+@Composable
+fun HandleTask(
+    tasks: List<TodoTask>,
+    navigationToTaskScreen: (taskId: Int) -> Unit,
     paddingValues: PaddingValues
 ){
-    if (tasks is RequestState.Success)
-    {
-        if (tasks.data.isEmpty())
+        if (tasks.isEmpty())
         {
             EmptyContent()
         }
         else{
-            DisplayTasks(tasks.data,navigationToTaskScreen,paddingValues)
+            DisplayTasks(tasks,navigationToTaskScreen,paddingValues)
         }
-    }
-
 }
 
 @Composable

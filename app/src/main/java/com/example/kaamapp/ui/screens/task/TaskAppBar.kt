@@ -1,7 +1,7 @@
 package com.example.kaamapp.ui.screens.task
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -12,22 +12,43 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.kaamapp.R
+import com.example.kaamapp.components.DialogAlertBox
 import com.example.kaamapp.models.data.Priority
 import com.example.kaamapp.models.data.TodoTask
 import com.example.kaamapp.ui.theme.topAppBarBackgroundColor
 import com.example.kaamapp.ui.theme.topAppBarContentColor
 import com.example.kaamapp.utils.Action
+import com.example.kaamapp.utils.RequestState
 
 @Composable
 fun TaskAppBar(
-    navigateToListTask :(Action)->Unit
+    navigateToListTask :(Action)->Unit,
+    selectedTask: RequestState<TodoTask?>
 ){
-    NewTaskAppBar(navigateToListTask)
+
+    if(selectedTask is RequestState.Success && selectedTask.data!=null)
+    {
+        if(selectedTask.data?.id == -1){
+            Log.d("selectedTaskTest","$selectedTask")
+            NewTaskAppBar(navigateToListTask)
+        }else{
+            ExistingTaskAppBar(selectedTask.data,navigateToListTask)
+        }
+    }else
+    {
+        NewTaskAppBar(navigateToListTask)
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +81,7 @@ fun NewTaskAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExistingTaskAppBar(
-    selectedTask : TodoTask,
+    selectedTask : TodoTask?,
     navigateToListTask :(Action)->Unit
 ){
     TopAppBar(
@@ -68,11 +89,13 @@ fun ExistingTaskAppBar(
             CloseAction(onCloseClicked =navigateToListTask )
         },
         title = {
-            Text(
-                text = selectedTask.title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (selectedTask != null) {
+                Text(
+                    text = selectedTask.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.topAppBarBackgroundColor,
@@ -82,10 +105,40 @@ fun ExistingTaskAppBar(
             actionIconContentColor= MaterialTheme.colorScheme.topAppBarContentColor,
         ),
         actions = {
-            DeleteAction(navigateToListTask)
-            UpdateAction(navigateToListTask)
+            ExistingTaskAppBarAction(
+                selectedTask,
+                navigateToListTask
+            )
+
         }
     )
+}
+
+@Composable
+fun ExistingTaskAppBarAction(
+    selectedTask : TodoTask?,
+    navigateToListTask: (Action) -> Unit
+){
+    var openDialog by remember{
+        mutableStateOf(false)
+    }
+    DialogAlertBox(
+        title = stringResource(
+            id = R.string.delete_task,
+            selectedTask?.title as Any
+        ),
+        text = stringResource(
+            id = R.string.delete_task_confirmation,
+            selectedTask?.title as Any
+        ),
+        onConfirmation = { navigateToListTask(Action.DELETE) },
+        onDismiss = {
+                    openDialog = false
+        },
+        isOpen = openDialog
+    )
+    DeleteAction { openDialog = true }
+    UpdateAction(navigateToListTask)
 }
 
 @Composable
@@ -126,9 +179,9 @@ fun AddAction(
 
 @Composable
 fun DeleteAction(
-    onDeleteClicked:(Action)->Unit
+    onDeleteClicked:()->Unit
 ){
-    IconButton(onClick = { onDeleteClicked(Action.DELETE) }) {
+    IconButton(onClick = { onDeleteClicked() }) {
         Icon(imageVector = Icons.Filled.Delete,
             contentDescription ="Delete Icon"
         )
@@ -140,7 +193,7 @@ fun DeleteAction(
 fun UpdateAction(
     onUpdateClicked:(Action)->Unit
 ){
-    IconButton(onClick = { onUpdateClicked(Action.ADD) }) {
+    IconButton(onClick = { onUpdateClicked(Action.UPDATE) }) {
         Icon(imageVector = Icons.Filled.Check,
             contentDescription ="Update task"
         )

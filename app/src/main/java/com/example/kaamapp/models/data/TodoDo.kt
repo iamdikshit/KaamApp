@@ -36,7 +36,7 @@ interface TodoDo {
     suspend fun deleteAllTodoTask()
 
     // Search Query
-    @Query("SELECT * FROM todo_table WHERE title LIKE :searchQuery OR description LIKE :searchQuery")
+    @Query("SELECT * FROM todo_table WHERE title LIKE '%' || :searchQuery || '%' OR description LIKE '%' || :searchQuery || '%'")
     fun searchTodoTask(searchQuery:String):Flow<List<TodoTask>>
 
     // Sort by low priority
